@@ -1,15 +1,15 @@
 """REST-based node for A4S Sealer device"""
+
 import datetime
 import time
 from pathlib import Path
 
+from a4s_sealer_driver import A4S_SEALER_DRIVER
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types.module_types import ModuleState, ModuleStatus
 from wei.types.step_types import ActionRequest, StepResponse, StepSucceeded
 from wei.utils import extract_version
-
-from a4s_sealer_driver import A4S_SEALER_DRIVER
 
 rest_module = RESTModule(
     name="sealer_node",

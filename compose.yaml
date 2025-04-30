@@ -9,7 +9,7 @@ services:
       tags:
         - ${IMAGE}:latest
         - ${IMAGE}:dev
-    command: python -m a4s_sealer_rest_node --port 3057 --device ${A4S_DEVICE}
+    command: python -m sealer_rest_node --port 3057 --device ${A4S_DEVICE}
     env_file: .env
     volumes:
       - /dev:/dev
