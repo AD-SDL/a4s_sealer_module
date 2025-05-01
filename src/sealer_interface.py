@@ -14,13 +14,16 @@ class Sealer:
                  - Responses begin with a "0" if the command was successful, or a negative error code number
     """
 
-    def __init__(self, host_path: str = "/dev/ttyUSB2", baud_rate: int = 19200):
+    def __init__(self, host_path: str = "/dev/ttyUSB2", baud_rate: int = 19200, resource_client=None, sealer_deck_resource=None, seal_resource=None):
         """
         This function initializes the data to be called and modified in other locations in the client.
         """
 
         self.host_path = host_path
         self.baud_rate = baud_rate
+        self.resource_client = resource_client
+        self.sealer_deck_resource = sealer_deck_resource
+        self.seal_resource = seal_resource
         self.connection = None
         self.connect_sealer()
         self.sealer_output_msg = ""
@@ -39,6 +42,16 @@ class Sealer:
             raise Exception(
                 "Could not establish connection, check that the device is connected and the correct USB serial device is selected."
             ) from e
+
+    def disconnect(self):
+        """
+        Closes the serial connection to the device.
+        """
+        if self.connection and self.connection.is_open:
+            self.connection.close()
+            print("Serial connection closed.")
+        else:
+            print("No open serial connection to close.")
 
     def get_status(self, time_wait=500):
         """
