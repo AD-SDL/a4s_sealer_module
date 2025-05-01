@@ -1,67 +1,113 @@
 """REST-based node for A4S Sealer device"""
 
-import datetime
 import time
-from pathlib import Path
+from typing import Optional
 
-from a4s_sealer_driver import A4S_SEALER_DRIVER
-from fastapi.datastructures import State
-from wei.modules.rest_module import RESTModule
-from wei.types.module_types import ModuleState, ModuleStatus
-from wei.types.step_types import ActionRequest, StepResponse, StepSucceeded
-from wei.utils import extract_version
-
-rest_module = RESTModule(
-    name="sealer_node",
-    version=extract_version(Path(__file__).parent.parent / "pyproject.toml"),
-    description="A node to control the A4S Sealer device",
-    model="A4S Sealer",
+from madsci.client.resource_client import ResourceClient
+from madsci.common.types.action_types import ActionSucceeded
+from madsci.common.types.auth_types import OwnershipInfo
+from madsci.common.types.node_types import RestNodeConfig
+from madsci.common.types.resource_types.definitions import (
+    ConsumableResourceDefinition,
+    SlotResourceDefinition,
 )
-rest_module.arg_parser.add_argument(
-    "--device",
-    type=str,
-    default="/dev/ttyUSB2",
-    help="Serial device for communicating with the device",
-)
+from madsci.node_module.helpers import action
+from madsci.node_module.rest_node_module import RestNode
+from pydantic.networks import AnyUrl
 
-rest_module.state.sealer = None
+from sealer_interface import Sealer
 
 
-@rest_module.startup()
-def sealer(state: State):
-    """Sealer startup handler."""
-    state.sealer = A4S_SEALER_DRIVER(state.device)
-    print("Sealer online")
+class SealerNodeConfig(RestNodeConfig):
+    """Configuration for the UR node module."""
+
+    device_port: str
+    resource_manager_url: Optional[AnyUrl] = None
 
 
-@rest_module.state_handler()
-def state(state: State):
-    """Returns the current state of the UR module"""
-    if state.status not in [ModuleStatus.BUSY, ModuleStatus.ERROR, ModuleStatus.INIT, None] or (
-        state.action_start and (datetime.datetime.now() - state.action_start > datetime.timedelta(0, 2))
-    ):
-        state.sealer.get_status()
-        if state.sealer.status_msg == 3:
-            state.status = ModuleStatus.ERROR
-        elif state.sealer.status_msg == 0:
-            state.status = ModuleStatus.IDLE
+class SealerNode(RestNode):
+    """A node to control the A4S Sealer device."""
 
-    return ModuleState(status=state.status, error="", status_msg=state.sealer.status_msg)
+    sealer_interface: Sealer = None
+    config_model: SealerNodeConfig
 
+    def startup_handler(self) -> None:
+        """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
 
-@rest_module.action(
-    name="seal",
-    description="Executes a sealing cycle on the Sealer device",
-)
-def seal(state: State, action: ActionRequest) -> StepResponse:
-    """
-    Seal a plate
-    """
-    state.sealer.seal()
-    time.sleep(15)
+        try:
+            if self.config.resource_manager_url:
+                self.resource_client = ResourceClient(self.config.resource_manager_url)
+                self.resource_owner = OwnershipInfo(node_id=self.node_definition.node_id)
+                self.sealer_deck_resource = self.resource_client.init_resource(
+                    SlotResourceDefinition(
+                        resource_name="sealer_deck",
+                        owner=self.resource_owner,
+                    )
+                )
+                self.seal_resource = self.resource_client.init_resource(
+                    ConsumableResourceDefinition(
+                        resource_name="seal",
+                        owner=self.resource_owner,
+                    )
+                )
+            else:
+                self.resource_client = None
+                self.sealer_deck_resource = None
+                self.seal_resource = None
 
-    return StepSucceeded()
+            self.logger.info("Node insitializing...")
+            self.sealer_interface = Sealer(
+                self.config.device_port,
+                resource_client=self.resource_client,
+                sealer_deck_resource=self.sealer_deck_resource,
+                seal_resource=self.seal_resource,
+            )
+
+        except Exception as err:
+            self.logger.log_error(f"Error starting the Sealer Node: {err}")
+            self.startup_has_run = False
+        else:
+            self.startup_has_run = True
+            self.logger.log("Sealer node initialized!")
+
+    def shutdown_handler(self) -> None:
+        """Called to close connections to devices or clean up any other resources."""
+        try:
+            self.logger.log("Shutting down Sealer node...")
+            if self.sealer_interface:
+                self.sealer_interface.disconnect()
+                self.logger.log("Sealer node closed!")
+                self.shutdown_has_run = True
+                del self.sealer_interface
+                self.sealer_interface = None
+            else:
+                self.logger.log("Sealer node not initialized, nothing to close.")
+        except Exception as err:
+            self.logger.log_error(f"Error shutting down the Sealer Node: {err}")
+
+    def state_handler(self):
+        """Periodically checks the state of the Sealer device and updates the node's state."""
+        if self.sealer_interface:
+            self.sealer_interface.get_status()
+        if self.sealer_interface.status_msg == 3:
+            self.node_state = {
+                "sealer_status_code": "ERROR",
+            }
+            self.logger.log_error("Sealer error")
+
+        elif self.sealer_interface.status_msg == 0:
+            self.node_state = {
+                "sealer_status_code": "READY",
+            }
+
+    @action(name="seal", description="Seal a plate")
+    def seal(self):
+        """Seal a plate"""
+        self.sealer_interface.seal()
+        time.sleep(15)
+        return ActionSucceeded()
 
 
 if __name__ == "__main__":
-    rest_module.start()
+    sealer_node = SealerNode()
+    sealer_node.start_node()
