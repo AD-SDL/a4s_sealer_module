@@ -6,7 +6,7 @@ import time
 import serial
 
 
-class A4S_SEALER_DRIVER:
+class Sealer:
     """
     Description:
                  - Python interface that allows remote commands to be executed using simple string messages over TCP/IP on PF400 cobot.
@@ -158,11 +158,11 @@ if __name__ == "__main__":
     Runs given function.
     """
 
-    sealer = A4S_SEALER_DRIVER("/dev/ttyUSB2")
+    # sealer = Sealer("/dev/ttyUSB2")
     # sealer.reset()
-    sealer.get_status()
+    # sealer.get_status()
 
-    print(sealer.status_msg)
+    # print(sealer.status_msg)
     # sealer.reset()
     # sealer.close_gate()
     # time.sleep(5)
