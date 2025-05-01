@@ -89,6 +89,10 @@ class SealerNode(RestNode):
         """Periodically checks the state of the Sealer device and updates the node's state."""
         if self.sealer_interface:
             self.sealer_interface.get_status()
+        else:
+            self.logger.log_error("Sealer interface is not initialized")
+            return
+
         if self.sealer_interface.status_msg == 3:
             self.node_state = {
                 "sealer_status_code": "ERROR",
