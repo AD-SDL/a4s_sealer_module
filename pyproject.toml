@@ -1,21 +1,18 @@
 [project]
 name = "a4s_sealer_module"
-version = "0.4.0"
-description = "Software for automatting a a4s sealer"
+version = "1.0.0"
+description = "Software for automatting a A4S sealer device"
 authors = [
-    {name = "Ryan D. Lewis", email="ryan.lewis@anl.gov"},
-    {name = "Rafael Vescovi", email="ravescovi@anl.gov"},
     {name = "Doga Ozgulbas", email="dozgulbas@anl.gov"},
+    {name = "Ryan D. Lewis", email="ryan.lewis@anl.gov"},
     {name = "Tobias Ginsburg", email = "tginsburg@anl.gov"},
 ]
 dependencies = [
-    "fastapi>=0.103.2",
-    "uvicorn>=0.21.1",
-    "pyserial>=3.5",
-    "pytest",
+    "pyserial",
     "madsci.node_module>=0.2.1",
 ]
-requires-python = ">=3.8.1"
+
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
@@ -63,7 +60,7 @@ exclude = [
 ]
 
 # Same as Black.
-line-length = 150
+line-length = 120
 indent-width = 4
 
 # Assume Python 3.8
@@ -138,3 +135,10 @@ plugins = ["pydantic.mypy"]
 strict = true
 disallow_untyped_defs = true
 implicit_reexport = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+    "ruff>=0.11.7",
+    "pytest",
+]
