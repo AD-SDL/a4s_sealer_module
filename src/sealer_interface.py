@@ -14,7 +14,14 @@ class Sealer:
                  - Responses begin with a "0" if the command was successful, or a negative error code number
     """
 
-    def __init__(self, host_path: str = "/dev/ttyUSB2", baud_rate: int = 19200, resource_client=None, sealer_deck_resource=None, seal_resource=None):
+    def __init__(
+        self,
+        host_path: str = "/dev/ttyUSB2",
+        baud_rate: int = 19200,
+        resource_client=None,
+        sealer_deck_resource=None,
+        seal_resource=None,
+    ):
         """
         This function initializes the data to be called and modified in other locations in the client.
         """
