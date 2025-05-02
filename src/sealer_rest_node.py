@@ -5,10 +5,11 @@ from typing import Optional
 
 from madsci.client.resource_client import ResourceClient
 from madsci.common.types.action_types import ActionSucceeded
+from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.auth_types import OwnershipInfo
 from madsci.common.types.node_types import RestNodeConfig
 from madsci.common.types.resource_types.definitions import (
-    ConsumableResourceDefinition,
+    ContinuousConsumableResourceDefinition,
     SlotResourceDefinition,
 )
 from madsci.node_module.helpers import action
@@ -45,7 +46,7 @@ class SealerNode(RestNode):
                     )
                 )
                 self.seal_resource = self.resource_client.init_resource(
-                    ConsumableResourceDefinition(
+                    ContinuousConsumableResourceDefinition(
                         resource_name="seal",
                         owner=self.resource_owner,
                     )
@@ -110,6 +111,19 @@ class SealerNode(RestNode):
         self.sealer_interface.seal()
         time.sleep(15)
         return ActionSucceeded()
+
+    def reset_seal_resource(self) -> AdminCommandResponse:
+        """Reset the seal resource"""
+        try:
+            if self.resource_client and self.sealer_deck_resource and self.seal_resource:
+                self.resource_client.empty(self.seal_resource)
+            else:
+                return AdminCommandResponse(
+                    success=False, data={"error": "Resource client or resources not initialized"}
+                )
+            return AdminCommandResponse(data={"Joint Angles": self.ur_interface.ur_connection.getj()})
+        except Exception:
+            return AdminCommandResponse(success=False)
 
 
 if __name__ == "__main__":

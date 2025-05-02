@@ -164,6 +164,16 @@ class Sealer:
         err_msg = "Failed to Seal"
         self.send_command(cmd_string, success_msg, err_msg)
 
+        try:
+            if self.resource_client and self.seal_resource:
+                self.resource_client.increase_quantity(self.seal_resource, 1)
+                if self.sealer_deck_resource:
+                    plate_resource = self.sealer_deck_resource.children[0]
+                    plate_resource.attributes["seal"] = self.seal_resource.resource_id
+                    self.resource_client.update_resource(plate_resource)
+        except Exception as e:
+            print(f"Error updating resources: {e}")
+
     def config_robot(self, temp, time):
         """
         Sets robot to given permission/time
