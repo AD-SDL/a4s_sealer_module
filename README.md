@@ -22,7 +22,7 @@ madsci node create
 Then use the following command to start the node
 
 ```
-python -m a4s_sealer_rest_node 
+python -m a4s_sealer_rest_node
 ```
 
 ### Docker Installation
