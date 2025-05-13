@@ -121,7 +121,7 @@ class SealerNode(RestNode):
                 return AdminCommandResponse(
                     success=False, data={"error": "Resource client or resources not initialized"}
                 )
-            return AdminCommandResponse(data={"Joint Angles": self.ur_interface.ur_connection.getj()})
+            return AdminCommandResponse(data={"Seal resource empty."})
         except Exception:
             return AdminCommandResponse(success=False)
 
