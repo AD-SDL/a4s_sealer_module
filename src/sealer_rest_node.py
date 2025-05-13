@@ -1,7 +1,6 @@
 """REST-based node for A4S Sealer device"""
 
 import time
-from typing import Optional
 
 from madsci.client.resource_client import ResourceClient
 from madsci.common.types.action_types import ActionSucceeded
@@ -14,7 +13,6 @@ from madsci.common.types.resource_types.definitions import (
 )
 from madsci.node_module.helpers import action
 from madsci.node_module.rest_node_module import RestNode
-from pydantic.networks import AnyUrl
 
 from sealer_interface import Sealer
 
@@ -22,8 +20,8 @@ from sealer_interface import Sealer
 class SealerNodeConfig(RestNodeConfig):
     """Configuration for the UR node module."""
 
-    device_port: str
-    resource_manager_url: Optional[AnyUrl] = None
+    device_path: str = "/dev/ttyUSB2"
+    """Path to the device (e.g., /dev/ttyUSB0)."""
 
 
 class SealerNode(RestNode):
@@ -31,45 +29,38 @@ class SealerNode(RestNode):
 
     sealer_interface: Sealer = None
     config_model: SealerNodeConfig
+    config: SealerNodeConfig
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
 
-        try:
-            if self.config.resource_manager_url:
-                self.resource_client = ResourceClient(self.config.resource_manager_url)
-                self.resource_owner = OwnershipInfo(node_id=self.node_definition.node_id)
-                self.sealer_deck_resource = self.resource_client.init_resource(
-                    SlotResourceDefinition(
-                        resource_name="sealer_deck",
-                        owner=self.resource_owner,
-                    )
+        if self.config.resource_server_url:
+            self.resource_client = ResourceClient(self.config.resource_server_url)
+            self.resource_owner = OwnershipInfo(node_id=self.node_definition.node_id)
+            self.sealer_deck_resource = self.resource_client.init_resource(
+                SlotResourceDefinition(
+                    resource_name="sealer_deck",
+                    owner=self.resource_owner,
                 )
-                self.seal_resource = self.resource_client.init_resource(
-                    ContinuousConsumableResourceDefinition(
-                        resource_name="seal",
-                        owner=self.resource_owner,
-                    )
-                )
-            else:
-                self.resource_client = None
-                self.sealer_deck_resource = None
-                self.seal_resource = None
-
-            self.logger.info("Node insitializing...")
-            self.sealer_interface = Sealer(
-                self.config.device_port,
-                resource_client=self.resource_client,
-                sealer_deck_resource=self.sealer_deck_resource,
-                seal_resource=self.seal_resource,
             )
-
-        except Exception as err:
-            self.logger.log_error(f"Error starting the Sealer Node: {err}")
-            self.startup_has_run = False
+            self.seal_resource = self.resource_client.init_resource(
+                ContinuousConsumableResourceDefinition(
+                    resource_name="seal",
+                    owner=self.resource_owner,
+                )
+            )
         else:
-            self.startup_has_run = True
-            self.logger.log("Sealer node initialized!")
+            self.resource_client = None
+            self.sealer_deck_resource = None
+            self.seal_resource = None
+
+        self.sealer_interface = Sealer(
+            self.config.device_path,
+            resource_client=self.resource_client,
+            sealer_deck_resource=self.sealer_deck_resource,
+            seal_resource=self.seal_resource,
+            logger=self.logger,
+        )
 
     def shutdown_handler(self) -> None:
         """Called to close connections to devices or clean up any other resources."""
@@ -86,7 +77,7 @@ class SealerNode(RestNode):
         except Exception as err:
             self.logger.log_error(f"Error shutting down the Sealer Node: {err}")
 
-    def state_handler(self):
+    def state_handler(self) -> None:
         """Periodically checks the state of the Sealer device and updates the node's state."""
         if self.sealer_interface:
             self.sealer_interface.get_status()
@@ -106,7 +97,7 @@ class SealerNode(RestNode):
             }
 
     @action(name="seal", description="Seal a plate")
-    def seal(self):
+    def seal(self) -> ActionSucceeded:
         """Seal a plate"""
         self.sealer_interface.seal()
         time.sleep(15)
@@ -115,13 +106,20 @@ class SealerNode(RestNode):
     def reset_seal_resource(self) -> AdminCommandResponse:
         """Reset the seal resource"""
         try:
-            if self.resource_client and self.sealer_deck_resource and self.seal_resource:
+            if (
+                self.resource_client
+                and self.sealer_deck_resource
+                and self.seal_resource
+            ):
                 self.resource_client.empty(self.seal_resource)
             else:
                 return AdminCommandResponse(
-                    success=False, data={"error": "Resource client or resources not initialized"}
+                    success=False,
+                    data={"error": "Resource client or resources not initialized"},
                 )
-            return AdminCommandResponse(data={"Joint Angles": self.ur_interface.ur_connection.getj()})
+            return AdminCommandResponse(
+                data={"Joint Angles": self.ur_interface.ur_connection.getj()}
+            )
         except Exception:
             return AdminCommandResponse(success=False)
 
