@@ -3,6 +3,7 @@
 import time
 
 from madsci.client.resource_client import ResourceClient
+from madsci.common.types.base_types import Error
 from madsci.common.types.action_types import ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.auth_types import OwnershipInfo
@@ -103,8 +104,8 @@ class SealerNode(RestNode):
         time.sleep(15)
         return ActionSucceeded()
 
-    def reset_seal_resource(self) -> AdminCommandResponse:
-        """Reset the seal resource"""
+    def reset(self) -> AdminCommandResponse:
+        """Reset the sealer and seal resource"""
         try:
             if (
                 self.resource_client
@@ -112,16 +113,10 @@ class SealerNode(RestNode):
                 and self.seal_resource
             ):
                 self.resource_client.empty(self.seal_resource)
-            else:
-                return AdminCommandResponse(
-                    success=False,
-                    data={"error": "Resource client or resources not initialized"},
-                )
-            return AdminCommandResponse(
-                data={"Joint Angles": self.ur_interface.ur_connection.getj()}
-            )
-        except Exception:
-            return AdminCommandResponse(success=False)
+            return super().reset()
+        except Exception as e:
+            self.logger.log_error(f"Error resetting the sealer: {e}")
+            return AdminCommandResponse(success=False, errors=[Error.from_exception(e)])
 
 
 if __name__ == "__main__":
