@@ -3,10 +3,10 @@
 import time
 
 from madsci.client.resource_client import ResourceClient
-from madsci.common.types.base_types import Error
 from madsci.common.types.action_types import ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.auth_types import OwnershipInfo
+from madsci.common.types.base_types import Error
 from madsci.common.types.node_types import RestNodeConfig
 from madsci.common.types.resource_types.definitions import (
     ContinuousConsumableResourceDefinition,
@@ -29,8 +29,7 @@ class SealerNode(RestNode):
     """A node to control the A4S Sealer device."""
 
     sealer_interface: Sealer = None
-    config_model: SealerNodeConfig
-    config: SealerNodeConfig
+    config_model = SealerNodeConfig
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
