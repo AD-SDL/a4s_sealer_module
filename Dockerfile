@@ -17,6 +17,8 @@ COPY ./pyproject.toml a4s_sealer_module/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache \
     pip install -e ./a4s_sealer_module
 
+RUN usermod -aG dialout madsci
+
 CMD ["python", "a4s_sealer_module/src/sealer_rest_node.py"]
 
 #########################################

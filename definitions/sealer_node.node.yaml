@@ -2,7 +2,7 @@ node_name: sealer_node
 node_url: null
 node_description: A REST Node to control A4S Sealer device
 node_type: device
-module_name: sealer_module
+module_name: a4s_sealer_module
 module_version: 0.0.1
 capabilities: null
 commands: {}
