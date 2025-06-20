@@ -14,6 +14,6 @@ services:
       tags:
         - ghcr.io/ad-sdl/a4s_sealer_module:latest
         - ghcr.io/ad-sdl/a4s_sealer_module:dev
-    command: python -m sealer_rest_node
+    command: python -m sealer_rest_node --node_definition /home/madsci/definitions/sealer_node.node.yaml
     volumes:
       - ./definitions:/home/madsci/definitions/

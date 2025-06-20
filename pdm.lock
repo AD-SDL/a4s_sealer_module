@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:f930babca532099a258cb90017801a1bfdebbb159df574b5f1bcd6f39f6cbe3b"
+content_hash = "sha256:a5c8057b60091c91d47198b4a27204f047a29e4690959457ea751125913d1555"
 
 [[metadata.targets]]
 requires_python = ">=3.10"
@@ -479,7 +479,7 @@ files = [
 
 [[package]]
 name = "madsci-node-module"
-version = "0.3.0"
+version = "0.4.2"
 requires_python = ">=3.9.1"
 summary = "The Modular Autonomous Discovery for Science (MADSci) Node Module Helper Classes."
 groups = ["default"]
@@ -489,8 +489,8 @@ dependencies = [
     "madsci-common",
 ]
 files = [
-    {file = "madsci_node_module-0.3.0-py3-none-any.whl", hash = "sha256:bd95bf67a7a36affb60f4b7cef50028020c5f7601c3d1042a3b12d3b2fc39493"},
-    {file = "madsci_node_module-0.3.0.tar.gz", hash = "sha256:cb0d4891a785293edd9a4719349b1a664bf5301fe45be894002398540bddda39"},
+    {file = "madsci_node_module-0.4.2-py3-none-any.whl", hash = "sha256:c10692d6561f656ec9a652c5a0efd17e408e82e88d72ada6c051c630d255ddb1"},
+    {file = "madsci_node_module-0.4.2.tar.gz", hash = "sha256:ae663fd878618554c128a39653a74a2e1ea8801822bfbe086af975707fdb77f3"},
 ]
 
 [[package]]

@@ -1,10 +1,7 @@
 node_name: sealer_node
-node_url: null
+node_id: 01JY7EWSBYNHKDEKZC8Y0XH2B1
 node_description: A REST Node to control A4S Sealer device
 node_type: device
 module_name: a4s_sealer_module
 module_version: 0.0.1
 capabilities: null
-commands: {}
-is_template: true
-config_defaults: {}

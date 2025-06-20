@@ -1,6 +1,6 @@
 [project]
 name = "a4s_sealer_module"
-version = "1.0.0"
+version = "1.1.0"
 description = "Software for automatting a A4S sealer device"
 authors = [
     {name = "Doga Ozgulbas", email="dozgulbas@anl.gov"},
@@ -9,7 +9,7 @@ authors = [
 ]
 dependencies = [
     "pyserial",
-    "madsci.node_module>=0.3.0",
+    "madsci.node_module>=0.4.2",
 ]
 
 requires-python = ">=3.9.1"

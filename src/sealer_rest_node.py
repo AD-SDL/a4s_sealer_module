@@ -1,9 +1,7 @@
 """REST-based node for A4S Sealer device"""
 
-from madsci.client.resource_client import ResourceClient
 from madsci.common.types.action_types import ActionFailed, ActionResult, ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
-from madsci.common.types.auth_types import OwnershipInfo
 from madsci.common.types.node_types import RestNodeConfig
 from madsci.common.types.resource_types.definitions import (
     DiscreteConsumableResourceDefinition,
@@ -31,29 +29,25 @@ class SealerNode(RestNode):
     """A node to control the A4S Sealer device."""
 
     sealer: Sealer = None
+    config: SealerNodeConfig = SealerNodeConfig()
     config_model = SealerNodeConfig
-    module_version = "1.0.0"
+    module_version = "1.1.0"
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
 
-        if self.config.resource_server_url:
-            self.resource_client = ResourceClient(self.config.resource_server_url)
-            self.resource_owner = OwnershipInfo(node_id=self.node_definition.node_id)
+        if self.resource_client:
             self.sealer_plate_deck = self.resource_client.init_resource(
                 SlotResourceDefinition(
                     resource_name=f"{self.node_definition.node_name}_sealer_deck",
-                    owner=self.resource_owner,
                 )
             )
             self.seal_roll = self.resource_client.init_resource(
                 DiscreteConsumableResourceDefinition(
                     resource_name=f"{self.node_definition.node_name}_seal_roll",
-                    owner=self.resource_owner,
                 )
             )
         else:
-            self.resource_client = None
             self.sealer_plate_deck = None
             self.seal_roll = None
 
