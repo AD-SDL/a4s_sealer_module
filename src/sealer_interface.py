@@ -155,7 +155,7 @@ class Sealer:
 
         while True:
             self.logger.log_debug(f"Waiting for response to command: {command}")
-            time.sleep(0.1)
+            time.sleep(1.0)
             if datetime.now() - action_send_time > timedelta(seconds=timeout):
                 raise TimeoutError("Timeout waiting for response from sealer.")
             self.read_messages()
