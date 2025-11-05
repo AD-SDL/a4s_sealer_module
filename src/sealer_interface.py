@@ -10,12 +10,13 @@ from madsci.client.event_client import EventClient
 from madsci.client.resource_client import ResourceClient
 from madsci.common.types.resource_types import DiscreteConsumable, Slot
 
-from sealer_messages import (
+from sealer_types import (
     SealerCommandAccepted,
     SealerCommandRejected,
     SealerCommunicationBusy,
     SealerOperationStatus,
     SealerSystemStatus,
+    SealInfo,
     SystemStatus,
 )
 
@@ -30,7 +31,7 @@ class Sealer:
 
     resource_client: Optional[ResourceClient] = None
     sealer_plate_deck: Optional[Slot] = None
-    seal_resource: Optional[DiscreteConsumable] = None
+    seal_roll: Optional[DiscreteConsumable] = None
 
     connection: Optional[serial.Serial] = None
     serial_lock: threading.Lock = threading.Lock()
@@ -59,7 +60,7 @@ class Sealer:
         self.baud_rate = baud_rate
         self.resource_client = resource_client
         self.sealer_plate_deck = sealer_plate_deck
-        self.seal_resource = seal_roll
+        self.seal_roll = seal_roll
         self.connection = None
         self.logger = logger or EventClient()
 
@@ -279,15 +280,17 @@ class Sealer:
             self.send_command(self.create_sealer_command_str("GS"))
 
         try:
-            if self.resource_client and self.seal_resource:
-                self.sealer_plate_deck = self.resource_client.get_resource(
-                    self.sealer_plate_deck.resource_id
-                )
-                self.resource_client.decrease_quantity(self.seal_resource, 1)
-                if self.sealer_plate_deck and len(self.sealer_plate_deck.children) > 0:
-                    plate_resource = self.sealer_plate_deck.children[0]
-                    plate_resource.attributes["sealed"] = True
-                    self.resource_client.update_resource(plate_resource)
+            if self.resource_client and self.seal_roll and self.sealer_plate_deck:
+                with self.resource_client.lock(
+                    self.seal_roll, self.sealer_plate_deck
+                ) as (seal_roll, sealer_plate_deck):
+                    seal_roll.decrease_quantity(1)
+                    if len(sealer_plate_deck.children) > 0:
+                        sealer_plate_deck.children[0].attributes["seal_info"] = (
+                            SealInfo(
+                                seal_roll_id=seal_roll.resource_id,
+                            ).model_dump(mode="json")
+                        )
         except Exception as e:
             self.logger.error(f"Error updating resources for sealer: {e}")
 

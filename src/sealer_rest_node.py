@@ -3,10 +3,7 @@
 from madsci.common.types.action_types import ActionFailed, ActionResult, ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.node_types import RestNodeConfig
-from madsci.common.types.resource_types.definitions import (
-    DiscreteConsumableResourceDefinition,
-    SlotResourceDefinition,
-)
+from madsci.common.types.resource_types import DiscreteConsumable, Slot
 from madsci.node_module.helpers import action
 from madsci.node_module.rest_node_module import RestNode
 from pydantic import Field
@@ -23,6 +20,10 @@ class SealerNodeConfig(RestNodeConfig):
     """Default sealing time in seconds."""
     seal_temp: int = Field(default=175, ge=50, le=200)
     """Default sealing temperature in Celsius."""
+    adapter_block: str = Field(
+        default="",  # TODO: Consult casey for list/default
+        description="Name of the adapter block currently installed on the sealer",
+    )
 
 
 class SealerNode(RestNode):
@@ -36,20 +37,8 @@ class SealerNode(RestNode):
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
 
-        if self.resource_client:
-            self.sealer_plate_deck = self.resource_client.init_resource(
-                SlotResourceDefinition(
-                    resource_name=f"{self.node_definition.node_name}_sealer_deck",
-                )
-            )
-            self.seal_roll = self.resource_client.init_resource(
-                DiscreteConsumableResourceDefinition(
-                    resource_name=f"{self.node_definition.node_name}_seal_roll",
-                )
-            )
-        else:
-            self.sealer_plate_deck = None
-            self.seal_roll = None
+        self.create_resource_templates()
+        self.create_resources()
 
         self.sealer = Sealer(
             self.config.device_path,
@@ -64,6 +53,34 @@ class SealerNode(RestNode):
             raise RuntimeError("Sealer connection failed")
         self.sealer.configure_instrument(
             temp=self.config.seal_temp, seal_time=self.config.seal_time
+        )
+
+    def create_resource_templates(self) -> None:
+        """Handle creation of Sealer-specific resource templates"""
+
+        self.resource_client.create_template(
+            template_name="a4s_sealer_carriage_template",
+            description="Plate Carriage for an a4s sealer",
+            resource=Slot("a4s_sealer_carriage_template"),
+            version="1.0.0",
+        )
+        self.resource_client.create_template(
+            template_name="a4s_seal_roll_template",
+            description="Plate seal roll used in an a4s sealer",
+            resource=DiscreteConsumable("a4s_seal_roll_template"),
+            version="1.0.0",
+        )
+
+    def create_resources(self) -> None:
+        """Handle creating resources from templates on node startup"""
+
+        self.sealer_plate_deck = self.resource_client.create_resource_from_template(
+            template_name="a4s_sealer_carriage",
+            resource_name=f"{self.node_definition.node_name} plate carriage",
+        )
+        self.seal_roll = self.resource_client.create_resource_from_template(
+            template_name="a4s_seal_roll_template",
+            resource_name=f"{self.node_definition.node_name} seal roll",
         )
 
     def shutdown_handler(self) -> None:
@@ -114,43 +131,40 @@ class SealerNode(RestNode):
         )
 
     @action(name="seal", description="Seal a plate")
-    def seal(self) -> ActionResult:
+    def seal(self) -> None:
         """Seal a plate"""
         self.sealer.seal()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            return ActionFailed(
-                errors=f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            raise RuntimeError(
+                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
-        return ActionSucceeded()
 
     @action(name="open", description="Open the sealer")
-    def open(self) -> ActionResult:
+    def open(self) -> None:
         """Open the sealer"""
         self.sealer.open_gate()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            return ActionFailed(
-                errors=f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            raise RuntimeError(
+                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
-        return ActionSucceeded()
 
     @action(name="close", description="Close the sealer")
-    def close(self) -> ActionResult:
+    def close(self) -> None:
         """Close the sealer"""
         self.sealer.close_gate()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            return ActionFailed(
-                errors=f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            raise RuntimeError(
+                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
-        return ActionSucceeded()
 
     @action(name="configure", description="Configure the sealer")
     def configure(self, seal_time: float, seal_temp: int) -> ActionResult:
@@ -168,8 +182,8 @@ class SealerNode(RestNode):
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            return ActionFailed(
-                errors=f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            raise RuntimeError(
+                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
         return ActionSucceeded()
 

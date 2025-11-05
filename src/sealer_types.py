@@ -1,10 +1,25 @@
-"""Data Models for Sealer Messages"""
+"""Data Models for Sealer Messages and other Types/Models"""
 
 from datetime import datetime, time
 from enum import Enum
 from typing import Optional
 
+from madsci.common.ownership import get_current_ownership_info
+from madsci.common.types.auth_types import OwnershipInfo
 from pydantic import BaseModel, Field
+
+
+class SealInfo(BaseModel):
+    """Seal Metadata to store on sealed resources"""
+
+    sealed: bool = True
+    """Whether the plate is sealed or not"""
+    sealed_by: OwnershipInfo = Field(default_factory=get_current_ownership_info)
+    """Ownership info for the sealer used to seal the plate"""
+    seal_roll_id: Optional[str]
+    """Resource ID of the seal roll used to seal the plate"""
+    seal_time: datetime = Field(default_factory=datetime.astimezone())
+    """A datetime stamp when the seal was performed (approximate)"""
 
 
 class SystemStatus(Enum):
