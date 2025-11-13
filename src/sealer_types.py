@@ -18,7 +18,7 @@ class SealInfo(BaseModel):
     """Ownership info for the sealer used to seal the plate"""
     seal_roll_id: Optional[str]
     """Resource ID of the seal roll used to seal the plate"""
-    seal_time: datetime = Field(default_factory=datetime.astimezone())
+    seal_time: datetime = Field(default_factory=datetime.now())
     """A datetime stamp when the seal was performed (approximate)"""
 
 

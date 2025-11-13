@@ -61,21 +61,25 @@ class SealerNode(RestNode):
         self.resource_client.create_template(
             template_name="a4s_sealer_carriage_template",
             description="Plate Carriage for an a4s sealer",
-            resource=Slot("a4s_sealer_carriage_template"),
+            resource=Slot(resource_name="a4s_sealer_carriage_template"),
             version="1.0.0",
         )
         self.resource_client.create_template(
             template_name="a4s_seal_roll_template",
             description="Plate seal roll used in an a4s sealer",
-            resource=DiscreteConsumable("a4s_seal_roll_template"),
-            version="1.0.0",
+            resource=DiscreteConsumable(
+                resource_name="a4s_seal_roll_template",
+                quantity=1000,
+                capacity=1000,
+            ),
+            version="1.1.0",
         )
 
     def create_resources(self) -> None:
         """Handle creating resources from templates on node startup"""
 
         self.sealer_plate_deck = self.resource_client.create_resource_from_template(
-            template_name="a4s_sealer_carriage",
+            template_name="a4s_sealer_carriage_template",
             resource_name=f"{self.node_definition.node_name} plate carriage",
         )
         self.seal_roll = self.resource_client.create_resource_from_template(
