@@ -1,6 +1,6 @@
 """REST-based node for A4S Sealer device"""
 
-from madsci.common.types.action_types import ActionFailed, ActionResult, ActionSucceeded
+from madsci.common.types.action_types import ActionResult, ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.node_types import RestNodeConfig
 from madsci.common.types.resource_types import DiscreteConsumable, Slot
@@ -174,12 +174,12 @@ class SealerNode(RestNode):
     def configure(self, seal_time: float, seal_temp: int) -> ActionResult:
         """Configure the sealer"""
         if seal_temp < 50 or seal_temp > 200:
-            return ActionFailed(
-                errors="Seal temperature must be between 50 and 200 degrees Celsius",
+            raise Exception(
+                "Seal temperature must be between 50 and 200 degrees Celsius"
             )
         if seal_time < 0 or seal_time > 10:
-            return ActionFailed(
-                errors="Seal time must be greater than 0 seconds and less than 10 seconds",
+            raise Exception(
+                "Seal time must be greater than 0 seconds and less than 10 seconds"
             )
         self.sealer.configure_instrument(temp=seal_temp, seal_time=seal_time)
         if self.sealer.sealer_system_status.error_code != 0:
