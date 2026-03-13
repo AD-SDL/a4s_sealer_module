@@ -1,37 +1,51 @@
 [project]
 name = "a4s_sealer_module"
-version = "1.2.0"
+version = "1.3.0"
 description = "Software for automatting a A4S sealer device"
 authors = [
     {name = "Doga Ozgulbas", email="dozgulbas@anl.gov"},
     {name = "Ryan D. Lewis", email="ryan.lewis@anl.gov"},
     {name = "Tobias Ginsburg", email = "tginsburg@anl.gov"},
+    {name = "TCasey Stone", email = "cstone@anl.gov"},
+
 ]
 dependencies = [
     "pyserial",
-    "madsci.node_module~=0.5.0",
-    "madsci.client~=0.5.0",
-    "madsci.common~=0.5.0",
+    "madsci.node_module~=0.7",
+    "madsci.client~=0.7",
+    "madsci.common~=0.7",
 ]
 
-requires-python = ">=3.9.1"
+requires-python = ">=3.10,<3.13"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.urls]
 homepage = "https://github.com/AD-SDL/a4s_sealer_module"
 
-######################
-# Build Info + Tools #
-######################
-[build-system]
-requires = ["setuptools>=61", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [dependency-groups]
 dev = [
-    "pre-commit>=4.2.0",
-    "ruff>=0.11.7",
-    "pytest",
-    "ipykernel>=7.1.0",
+    "ipykernel>=6.29.5",
+    "ruff>=0.12.0",
+    "pre-commit>=4.3.0",
+    "pydantic-settings-export>=1.0.2",
 ]
+
+[tool.pydantic_settings_export]
+project_dir = "."
+default_settings = [
+    "sealer_rest_node:SealerNodeConfig",
+]
+
+[[tool.pydantic_settings_export.generators.markdown]]
+paths = ["docs/Configuration.md"]
+
+[[tool.pydantic_settings_export.generators.dotenv]]
+paths = [".env.example"]
+
+[tool.pdm]
+distribution = true
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
