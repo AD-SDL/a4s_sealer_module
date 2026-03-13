@@ -1,6 +1,8 @@
 """REST-based node for A4S Sealer device"""
 
-from madsci.common.types.action_types import ActionResult, ActionSucceeded
+from typing import Optional
+
+from madsci.common.types.action_types import ActionFailed
 from madsci.common.types.admin_command_types import AdminCommandResponse
 from madsci.common.types.node_types import RestNodeConfig
 from madsci.common.types.resource_types import DiscreteConsumable, Slot
@@ -21,8 +23,8 @@ class SealerNodeConfig(RestNodeConfig):
     seal_temp: int = Field(default=175, ge=50, le=200)
     """Default sealing temperature in Celsius."""
     adapter_block: str = Field(
-        default="",  # TODO: Consult casey for list/default
-        description="Name of the adapter block currently installed on the sealer",
+        default="",
+        description="Name of the adapter block currently installed on the sealer. Options are AdaptorA, AdaptorB and none",
     )
 
 
@@ -32,7 +34,6 @@ class SealerNode(RestNode):
     sealer: Sealer = None
     config: SealerNodeConfig = SealerNodeConfig()
     config_model = SealerNodeConfig
-    module_version = "1.1.0"
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
@@ -82,15 +83,22 @@ class SealerNode(RestNode):
             template_name="a4s_sealer_carriage_template",
             resource_name=f"{self.node_definition.node_name} plate carriage",
         )
+        self.logger.log_info(
+            f"Initialized sealer plate deck resource from template: {self.sealer_plate_deck.resource_id}"
+        )
         self.seal_roll = self.resource_client.create_resource_from_template(
             template_name="a4s_seal_roll_template",
             resource_name=f"{self.node_definition.node_name} seal roll",
+        )
+        self.logger.log_info(
+            f"Initialized seal roll resource from template: {self.seal_roll.resource_id}"
         )
 
     def shutdown_handler(self) -> None:
         """Called to close connections to devices or clean up any other resources."""
         try:
             if self.sealer:
+                self.sealer.disconnect()
                 del self.sealer
                 self.sealer = None
         except Exception as err:
@@ -133,52 +141,56 @@ class SealerNode(RestNode):
             if self.sealer.sealer_communication_busy
             else None
         )
+        self.node_state["sealer_adapter_block"] = self.config.adapter_block
 
     @action(name="seal", description="Seal a plate")
-    def seal(self) -> None:
+    def seal(self) -> Optional[ActionFailed]:
         """Seal a plate"""
         self.sealer.seal()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            raise RuntimeError(
-                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            return ActionFailed(
+                f"Failed to seal! Error code: {self.sealer.sealer_system_status.error_code}",
             )
+        return None
 
     @action(name="open", description="Open the sealer")
-    def open(self) -> None:
+    def open(self) -> Optional[ActionFailed]:
         """Open the sealer"""
         self.sealer.open_gate()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            raise RuntimeError(
-                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            return ActionFailed(
+                f"Failed to open! Error code: {self.sealer.sealer_system_status.error_code}",
             )
+        return None
 
     @action(name="close", description="Close the sealer")
-    def close(self) -> None:
+    def close(self) -> Optional[ActionFailed]:
         """Close the sealer"""
         self.sealer.close_gate()
         if self.sealer.sealer_system_status.error_code != 0:
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            raise RuntimeError(
-                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            return ActionFailed(
+                f"Failed to close! Error code: {self.sealer.sealer_system_status.error_code}",
             )
+        return None
 
     @action(name="configure", description="Configure the sealer")
-    def configure(self, seal_time: float, seal_temp: int) -> ActionResult:
+    def configure(self, seal_time: float, seal_temp: int) -> Optional[ActionFailed]:
         """Configure the sealer"""
         if seal_temp < 50 or seal_temp > 200:
-            raise Exception(
+            return ActionFailed(
                 "Seal temperature must be between 50 and 200 degrees Celsius"
             )
         if seal_time < 0 or seal_time > 10:
-            raise Exception(
+            return ActionFailed(
                 "Seal time must be greater than 0 seconds and less than 10 seconds"
             )
         self.sealer.configure_instrument(temp=seal_temp, seal_time=seal_time)
@@ -186,13 +198,14 @@ class SealerNode(RestNode):
             self.logger.log_error(
                 f"Sealer error: {self.sealer.sealer_system_status.error_code}"
             )
-            raise RuntimeError(
-                f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
+            return ActionFailed(
+                f"Configuration failed! Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
-        return ActionSucceeded()
+        return None
 
     def reset(self) -> AdminCommandResponse:
         """Reset the sealer"""
+        self.logger.log("Resetting node...")
         response = super().reset()
         self.sealer.reset()
         if self.sealer.sealer_system_status.error_code != 0:
@@ -203,6 +216,7 @@ class SealerNode(RestNode):
                 success=False,
                 errors=f"Sealer error code: {self.sealer.sealer_system_status.error_code}",
             )
+        self.logger.log("Node reset.")
         return response
 
 
