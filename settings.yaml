@@ -1,0 +1,3 @@
+node_name: test_sealer
+node_description: MADSci node for controlling A4S Sealer
+node_module_name: a4s_sealer
