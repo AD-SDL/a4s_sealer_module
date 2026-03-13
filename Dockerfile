@@ -1,24 +1,24 @@
 FROM ghcr.io/ad-sdl/madsci:latest
 
 LABEL org.opencontainers.image.source=https://github.com/AD-SDL/a4s_sealer_module
-LABEL org.opencontainers.image.description="Drivers and REST API's for the A4S Sealer"
+LABEL org.opencontainers.image.description="Drivers and REST API's for the PF400 plate handler robots"
 LABEL org.opencontainers.image.licenses=MIT
 
 #########################################
 # Module specific logic goes below here #
 #########################################
 
-RUN mkdir -p a4s_sealer_module
+ARG USER_ID=9999
+ARG GROUP_ID=9999
 
-COPY ./src a4s_sealer_module/src
-COPY ./README.md a4s_sealer_module/README.md
-COPY ./pyproject.toml a4s_sealer_module/pyproject.toml
+COPY ./src /home/madsci/a4s_sealer_module/src
+COPY ./README.md /home/madsci/a4s_sealer_module/README.md
+COPY ./pyproject.toml /home/madsci/a4s_sealer_module/pyproject.toml
 
 RUN --mount=type=cache,target=/root/.cache \
-    pip install -e ./a4s_sealer_module
+    uv pip install --python ${MADSCI_VENV}/bin/python -e /home/madsci/a4s_sealer_module && \
+    chown -R ${USER_ID}:${GROUP_ID} /home/madsci/a4s_sealer_module
 
-RUN usermod -aG dialout madsci
-
-CMD ["python", "a4s_sealer_module/src/sealer_rest_node.py"]
+CMD ["python", "-m", "sealer_rest_node"]
 
 #########################################
