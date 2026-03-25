@@ -16,6 +16,7 @@ COPY ./README.md /home/madsci/a4s_sealer_module/README.md
 COPY ./pyproject.toml /home/madsci/a4s_sealer_module/pyproject.toml
 
 RUN --mount=type=cache,target=/root/.cache \
+    pip install uv && \
     uv pip install --python ${MADSCI_VENV}/bin/python -e /home/madsci/a4s_sealer_module && \
     chown -R ${USER_ID}:${GROUP_ID} /home/madsci/a4s_sealer_module
 
