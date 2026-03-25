@@ -1,0 +1,7 @@
+node_name: default.node
+node_id: 01KMKB6Y8HKM10RMVSCG5S17D7
+node_description: null
+node_type: device
+module_name: sealer_node
+module_version: 0.0.1
+capabilities: null

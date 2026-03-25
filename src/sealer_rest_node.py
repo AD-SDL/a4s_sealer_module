@@ -81,14 +81,14 @@ class SealerNode(RestNode):
 
         self.sealer_plate_deck = self.resource_client.create_resource_from_template(
             template_name="a4s_sealer_carriage_template",
-            resource_name=f"{self.node_definition.node_name} plate carriage",
+            resource_name=f"{self.node_info.node_name}.plate_carriage",
         )
         self.logger.log_info(
             f"Initialized sealer plate deck resource from template: {self.sealer_plate_deck.resource_id}"
         )
         self.seal_roll = self.resource_client.create_resource_from_template(
             template_name="a4s_seal_roll_template",
-            resource_name=f"{self.node_definition.node_name} seal roll",
+            resource_name=f"{self.node_info.node_name}.seal_roll",
         )
         self.logger.log_info(
             f"Initialized seal roll resource from template: {self.seal_roll.resource_id}"
