@@ -11,9 +11,9 @@ authors = [
 ]
 dependencies = [
     "pyserial",
-    "madsci.node_module~=0.7",
-    "madsci.client~=0.7",
-    "madsci.common~=0.7",
+    "madsci.node_module~=0.7.1",
+    "madsci.client~=0.7.1",
+    "madsci.common~=0.7.1",
 ]
 
 requires-python = ">=3.10,<3.13"
