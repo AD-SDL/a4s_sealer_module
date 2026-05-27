@@ -30,7 +30,7 @@ class Sealer:
     """
 
     resource_client: Optional[ResourceClient] = None
-    sealer_plate_deck: Optional[Slot] = None
+    nest: Optional[Slot] = None
     seal_roll: Optional[DiscreteConsumable] = None
 
     connection: Optional[serial.Serial] = None
@@ -48,7 +48,7 @@ class Sealer:
         serial_device: str = "/dev/ttyUSB2",
         baud_rate: int = 19200,
         resource_client: Optional[ResourceClient] = None,
-        sealer_plate_deck: Optional[Slot] = None,
+        nest: Optional[Slot] = None,
         seal_roll: Optional[DiscreteConsumable] = None,
         logger: Optional[EventClient] = None,
     ) -> "Sealer":
@@ -59,7 +59,7 @@ class Sealer:
         self.serial_device = serial_device
         self.baud_rate = baud_rate
         self.resource_client = resource_client
-        self.sealer_plate_deck = sealer_plate_deck
+        self.nest = nest
         self.seal_roll = seal_roll
         self.connection = None
         self.logger = logger or EventClient()
@@ -280,13 +280,13 @@ class Sealer:
             self.send_command(self.create_sealer_command_str("GS"))
 
         try:
-            if self.resource_client and self.seal_roll and self.sealer_plate_deck:
+            if self.resource_client and self.seal_roll and self.nest:
                 with self.resource_client.lock(
-                    self.seal_roll, self.sealer_plate_deck
-                ) as (seal_roll, sealer_plate_deck):
+                    self.seal_roll, self.nest
+                ) as (seal_roll, nest):
                     seal_roll.decrease_quantity(1)
-                    if len(sealer_plate_deck.children) > 0:
-                        sealer_plate_deck.children[0].attributes["seal_info"] = (
+                    if len(nest.children) > 0:
+                        nest.children[0].attributes["seal_info"] = (
                             SealInfo(
                                 seal_roll_id=seal_roll.resource_id,
                             ).model_dump(mode="json")

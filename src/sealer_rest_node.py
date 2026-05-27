@@ -43,7 +43,7 @@ class SealerNode(RestNode):
         self.sealer = Sealer(
             self.config.device_path,
             resource_client=self.resource_client,
-            sealer_plate_deck=self.sealer_plate_deck,
+            nest=self.nest,
             seal_roll=self.seal_roll,
             logger=self.logger,
         )
@@ -59,9 +59,9 @@ class SealerNode(RestNode):
         """Handle creation of Sealer-specific resource templates"""
 
         self.resource_client.create_template(
-            template_name="a4s_sealer_carriage_template",
-            description="Plate Carriage for an a4s sealer",
-            resource=Slot(resource_name="a4s_sealer_carriage_template"),
+            template_name="a4s_sealer_nest_template",
+            description="Plate Nest for an a4s sealer",
+            resource=Slot(resource_name="a4s_sealer_nest_template"),
             version="1.0.0",
         )
         self.resource_client.create_template(
@@ -78,13 +78,13 @@ class SealerNode(RestNode):
     def create_resources(self) -> None:
         """Handle creating resources from templates on node startup"""
 
-        self.sealer_plate_deck = self.resource_client.create_resource_from_template(
-            template_name="a4s_sealer_carriage_template",
-            resource_name=f"{self.node_definition.node_name} plate carriage",
+        self.nest = self.resource_client.create_resource_from_template(
+            template_name="a4s_sealer_nest_template",
+            resource_name=f"{self.node_info.node_name}.nest",
         )
         self.seal_roll = self.resource_client.create_resource_from_template(
             template_name="a4s_seal_roll_template",
-            resource_name=f"{self.node_definition.node_name} seal roll",
+            resource_name=f"{self.node_info.node_name}.seal_roll",
         )
 
     def shutdown_handler(self) -> None:
