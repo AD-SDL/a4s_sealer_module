@@ -281,16 +281,15 @@ class Sealer:
 
         try:
             if self.resource_client and self.seal_roll and self.nest:
-                with self.resource_client.lock(
-                    self.seal_roll, self.nest
-                ) as (seal_roll, nest):
+                with self.resource_client.lock(self.seal_roll, self.nest) as (
+                    seal_roll,
+                    nest,
+                ):
                     seal_roll.decrease_quantity(1)
                     if len(nest.children) > 0:
-                        nest.children[0].attributes["seal_info"] = (
-                            SealInfo(
-                                seal_roll_id=seal_roll.resource_id,
-                            ).model_dump(mode="json")
-                        )
+                        nest.children[0].attributes["seal_info"] = SealInfo(
+                            seal_roll_id=seal_roll.resource_id,
+                        ).model_dump(mode="json")
         except Exception as e:
             self.logger.error(f"Error updating resources for sealer: {e}")
 
