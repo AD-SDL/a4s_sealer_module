@@ -1,8 +1,10 @@
 """REST-based node for A4S Sealer device"""
 
+from typing import Annotated, ClassVar
+
 from madsci.common.types.action_types import ActionFailed, ActionResult, ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
-from madsci.common.types.node_types import RestNodeConfig
+from madsci.common.types.node_types import NodeIntrinsicLocationDefinition, NodeRepresentationTemplateDefinition, RestNodeConfig
 from madsci.common.types.resource_types import DiscreteConsumable, Slot
 from madsci.node_module.helpers import action
 from madsci.node_module.rest_node_module import RestNode
@@ -33,6 +35,42 @@ class SealerNode(RestNode):
     config: SealerNodeConfig = SealerNodeConfig()
     config_model = SealerNodeConfig
     module_version = "1.1.0"
+
+    # Location representation templates — registered automatically by template_handler()
+    location_representation_templates: ClassVar[
+        list[NodeRepresentationTemplateDefinition]
+    ] = [
+        NodeRepresentationTemplateDefinition(
+            template_name="sealer_carriage_repr",
+            default_values={"carriage_type": "standard", "capacity": 1},
+            schema_def={
+                "type": "object",
+                "properties": {
+                    "capacity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Number of plates the carriage can hold",
+                    },
+                },
+            },
+            required_overrides=[],
+            tags=["carriage"],
+            version="1.0.0",
+            description="Sealer carriage representation with capacity",
+        ),
+    ]
+
+    # Intrinsic locations — auto-created on startup with '{node_name}.' prefix
+    intrinsic_locations: ClassVar[list[NodeIntrinsicLocationDefinition]] = [
+        NodeIntrinsicLocationDefinition(
+            location_name="sealer_carriage",
+            description="Sealer carriage where plates are placed for seal application.",
+            representation_template_name="sealer_carriage_repr",
+            resource_template_name="a4s_sealer_nest_template",
+            allow_transfers=True,
+        ),
+    ]
+
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
