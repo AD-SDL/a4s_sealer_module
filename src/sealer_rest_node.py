@@ -80,11 +80,11 @@ class SealerNode(RestNode):
 
         self.sealer_plate_deck = self.resource_client.create_resource_from_template(
             template_name="a4s_sealer_carriage_template",
-            resource_name=f"{self.node_definition.node_name} plate carriage",
+            resource_name=f"{self.node_definition.node_name}.nest",
         )
         self.seal_roll = self.resource_client.create_resource_from_template(
             template_name="a4s_seal_roll_template",
-            resource_name=f"{self.node_definition.node_name} seal roll",
+            resource_name=f"{self.node_definition.node_name}.seal_roll",
         )
 
     def shutdown_handler(self) -> None:
