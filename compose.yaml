@@ -1,20 +1,19 @@
-name: a4s_sealer_module
+name: a4s_sealer_node
 services:
-  a4s_sealer_module:
-    container_name: a4s_sealer_module
-    image: ${IMAGE}
+  a4s_sealer:
+    container_name: a4s_sealer
+    image: ghcr.io/ad-sdl/a4s_sealer_module
+    network_mode: host
+    privileged: true
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     build:
       context: .
       dockerfile: Dockerfile
       tags:
-        - ${IMAGE}:latest
-        - ${IMAGE}:dev
-    command: python -m a4s_sealer_rest_node --port 3057 --device ${A4S_DEVICE}
-    env_file: .env
+        - ghcr.io/ad-sdl/a4s_sealer_module:latest
+        - ghcr.io/ad-sdl/a4s_sealer_module:dev
+    command: python -m sealer_rest_node --node_definition /home/madsci/definitions/sealer_node.node.yaml
     volumes:
-      - /dev:/dev
-      - ./src:/home/app/a4s_sealer_module/src
-      - ./tests:/home/app/a4s_sealer_module/tests
-    ports:
-      - 3057:3057
-    privileged: True
+      - ./definitions:/home/madsci/definitions/
