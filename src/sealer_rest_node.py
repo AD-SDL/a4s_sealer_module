@@ -1,10 +1,14 @@
 """REST-based node for A4S Sealer device"""
 
-from typing import Annotated, ClassVar
+from typing import ClassVar
 
 from madsci.common.types.action_types import ActionFailed, ActionResult, ActionSucceeded
 from madsci.common.types.admin_command_types import AdminCommandResponse
-from madsci.common.types.node_types import NodeIntrinsicLocationDefinition, NodeRepresentationTemplateDefinition, RestNodeConfig
+from madsci.common.types.node_types import (
+    NodeIntrinsicLocationDefinition,
+    NodeRepresentationTemplateDefinition,
+    RestNodeConfig,
+)
 from madsci.common.types.resource_types import DiscreteConsumable, Slot
 from madsci.node_module.helpers import action
 from madsci.node_module.rest_node_module import RestNode
@@ -70,7 +74,6 @@ class SealerNode(RestNode):
             allow_transfers=True,
         ),
     ]
-
 
     def startup_handler(self) -> None:
         """Called to (re)initialize the node. Should be used to open connections to devices or initialize any other resources."""
